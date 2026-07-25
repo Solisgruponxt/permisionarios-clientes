@@ -1,0 +1,531 @@
+<title>Registro de Permisionarios y Clientes</title>
+<style>
+  :root{
+    color-scheme: light;
+    --page:            #f5f6f8;
+    --surface-card:     #ffffff;
+    --surface-card-hi:  #eef2f8;
+    --text-primary:     #12151a;
+    --text-secondary:   #4b5563;
+    --text-muted:       #8b94a3;
+    --border:           rgba(18,21,26,0.10);
+    --border-strong:    rgba(18,21,26,0.16);
+    --shadow:           0 1px 2px rgba(16,24,40,0.06);
+
+    --lvl-permisionario: #2a78d6;
+    --lvl-cliente:       #eb6834;
+    --lvl-tipo:          #1baf7a;
+    --lvl-fuente:        #eda100;
+
+    --st-good:     #0ca30c;
+    --st-warn:     #d98a00;
+    --st-critical: #d03b3b;
+
+    --link-stroke: #c7ccd4;
+    --focus-ring:  #2a78d6;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:where(:not([data-theme="light"])){
+      color-scheme: dark;
+      --page:            #0e1013;
+      --surface-card:     #1a1d22;
+      --surface-card-hi:  #20242b;
+      --text-primary:     #f2f4f7;
+      --text-secondary:   #b7bfc9;
+      --text-muted:       #7c8695;
+      --border:           rgba(255,255,255,0.10);
+      --border-strong:    rgba(255,255,255,0.18);
+      --shadow:           0 1px 2px rgba(0,0,0,0.4);
+
+      --lvl-permisionario: #3987e5;
+      --lvl-cliente:       #d95926;
+      --lvl-tipo:          #199e70;
+      --lvl-fuente:        #c98500;
+
+      --st-good:     #0ca30c;
+      --st-warn:     #d98a00;
+      --st-critical: #e66767;
+
+      --link-stroke: #383e47;
+      --focus-ring:  #3987e5;
+    }
+  }
+  :root[data-theme="dark"]{
+    color-scheme: dark;
+    --page:            #0e1013;
+    --surface-card:     #1a1d22;
+    --surface-card-hi:  #20242b;
+    --text-primary:     #f2f4f7;
+    --text-secondary:   #b7bfc9;
+    --text-muted:       #7c8695;
+    --border:           rgba(255,255,255,0.10);
+    --border-strong:    rgba(255,255,255,0.18);
+    --shadow:           0 1px 2px rgba(0,0,0,0.4);
+    --lvl-permisionario: #3987e5;
+    --lvl-cliente:       #d95926;
+    --lvl-tipo:          #199e70;
+    --lvl-fuente:        #c98500;
+    --st-good:     #0ca30c;
+    --st-warn:     #d98a00;
+    --st-critical: #e66767;
+    --link-stroke: #383e47;
+    --focus-ring:  #3987e5;
+  }
+  :root[data-theme="light"]{
+    color-scheme: light;
+    --page:            #f5f6f8;
+    --surface-card:     #ffffff;
+    --surface-card-hi:  #eef2f8;
+    --text-primary:     #12151a;
+    --text-secondary:   #4b5563;
+    --text-muted:       #8b94a3;
+    --border:           rgba(18,21,26,0.10);
+    --border-strong:    rgba(18,21,26,0.16);
+    --lvl-permisionario: #2a78d6;
+    --lvl-cliente:       #eb6834;
+    --lvl-tipo:          #1baf7a;
+    --lvl-fuente:        #eda100;
+    --link-stroke: #c7ccd4;
+  }
+
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:var(--page);
+    color:var(--text-primary);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  ::selection{ background: color-mix(in srgb, var(--lvl-permisionario) 30%, transparent); }
+
+  .app{ max-width:1280px; margin:0 auto; padding:28px 24px 56px; }
+
+  header.top{ display:flex; flex-direction:column; gap:4px; margin-bottom:22px; }
+  .eyebrow{
+    font-size:11px; font-weight:700; letter-spacing:.11em; text-transform:uppercase;
+    color: var(--lvl-permisionario);
+  }
+  h1{ font-size:26px; line-height:1.2; margin:2px 0 0; font-weight:700; text-wrap:balance; letter-spacing:-0.01em; }
+  .sub{ font-size:14px; color:var(--text-secondary); max-width:62ch; margin-top:6px; line-height:1.5; }
+
+  .kpi-row{
+    display:grid; grid-template-columns:repeat(4,1fr); gap:12px;
+    margin:20px 0 18px;
+  }
+  .kpi{
+    background:var(--surface-card); border:1px solid var(--border); border-radius:10px;
+    padding:14px 16px; box-shadow:var(--shadow);
+  }
+  .kpi .val{ font-size:24px; font-weight:700; font-variant-numeric:tabular-nums; letter-spacing:-0.01em; }
+  .kpi .lbl{ font-size:11.5px; color:var(--text-muted); margin-top:2px; text-transform:uppercase; letter-spacing:.05em; font-weight:600; }
+  .kpi .sub2{ font-size:12px; color:var(--text-secondary); margin-top:4px; }
+
+  .kpi-tipos{ display:flex; flex-direction:column; }
+  .tipo-list{ display:flex; flex-direction:column; gap:7px; }
+  .tipo-row{ display:flex; align-items:center; gap:8px; }
+  .tipo-row .tname{
+    flex:0 0 64px; font-size:11.5px; font-weight:600; color:var(--text-secondary);
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+  .tipo-row .tbar{ flex:1 1 auto; height:6px; border-radius:3px; background:var(--border); overflow:hidden; }
+  .tipo-row .tbar span{ display:block; height:100%; background:var(--lvl-tipo); border-radius:3px; }
+  .tipo-row .tval{
+    flex:0 0 auto; min-width:38px; text-align:right; font-size:11.5px; font-weight:700;
+    font-variant-numeric:tabular-nums; color:var(--text-primary);
+  }
+
+  .toolbar{
+    display:flex; align-items:center; gap:16px; flex-wrap:wrap;
+    padding:12px 14px; background:var(--surface-card); border:1px solid var(--border);
+    border-radius:10px; margin-bottom:16px; box-shadow:var(--shadow);
+  }
+  .search{ position:relative; flex:1 1 240px; min-width:200px; }
+  .search input{
+    width:100%; padding:8px 12px 8px 32px; border-radius:8px; border:1px solid var(--border-strong);
+    background:var(--page); color:var(--text-primary); font-size:13.5px;
+  }
+  .search input:focus{ outline:2px solid var(--focus-ring); outline-offset:1px; }
+  .search::before{
+    content:"⌕"; position:absolute; left:10px; top:50%; transform:translateY(-50%);
+    color:var(--text-muted); font-size:15px; pointer-events:none;
+  }
+  .btn{
+    font-size:12.5px; font-weight:600; padding:7px 12px; border-radius:7px;
+    border:1px solid var(--border-strong); background:var(--surface-card); color:var(--text-secondary);
+    cursor:pointer; white-space:nowrap;
+  }
+  .btn:hover{ background:var(--surface-card-hi); color:var(--text-primary); }
+  .btn:focus-visible{ outline:2px solid var(--focus-ring); outline-offset:1px; }
+
+  .legend{ display:flex; align-items:center; gap:14px; flex-wrap:wrap; font-size:12px; color:var(--text-secondary); }
+  .legend .grp{ display:flex; align-items:center; gap:6px; }
+  .legend .dot{ width:9px; height:9px; border-radius:50%; box-shadow:0 0 0 1px var(--surface-card); flex:none; }
+  .legend .divider{ width:1px; height:16px; background:var(--border-strong); }
+  .legend .sw{ width:9px; height:9px; border-radius:2px; flex:none; }
+
+  .tree-frame{
+    background:var(--surface-card); border:1px solid var(--border); border-radius:12px;
+    box-shadow:var(--shadow); overflow:auto; position:relative;
+    max-height:72vh;
+  }
+  #treeWrap{ position:relative; }
+  svg.links{ position:absolute; top:0; left:0; pointer-events:none; }
+
+  .node{
+    position:absolute; display:flex; align-items:center; gap:8px;
+    background:var(--surface-card); border:1px solid var(--border);
+    border-radius:8px; box-shadow:var(--shadow);
+    padding:6px 10px 6px 13px; overflow:hidden;
+  }
+  .node::before{
+    content:""; position:absolute; left:0; top:0; bottom:0; width:3px;
+  }
+  .node.lvl-0::before{ background:var(--lvl-permisionario); }
+  .node.lvl-1::before{ background:var(--lvl-cliente); }
+  .node.lvl-2::before{ background:var(--lvl-fuente); }
+  .node.lvl-3::before{ background:var(--lvl-tipo); }
+
+  .node.clickable{ cursor:pointer; }
+  .node.clickable:hover{ background:var(--surface-card-hi); border-color:var(--border-strong); }
+  .node:focus-visible{ outline:2px solid var(--focus-ring); outline-offset:1px; }
+  .node.dim{ opacity:.32; }
+
+  .chev{
+    flex:none; width:13px; height:13px; position:relative; transition:transform .15s ease;
+  }
+  .chev::before{
+    content:""; position:absolute; left:2px; top:50%; width:0; height:0;
+    transform:translateY(-50%);
+    border-top:4px solid transparent; border-bottom:4px solid transparent;
+    border-left:5px solid var(--text-muted);
+  }
+  .chev.open{ transform:rotate(90deg); }
+  .chev.spacer{ width:13px; }
+  .chev.spacer::before{ display:none; }
+
+  .label{
+    flex:1 1 auto; min-width:0; font-size:12.5px; font-weight:600; color:var(--text-primary);
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .label mark{ background:color-mix(in srgb, var(--lvl-permisionario) 35%, transparent); color:inherit; border-radius:2px; padding:0 1px; }
+
+  .statusbar{ flex:none; width:46px; height:6px; border-radius:3px; overflow:hidden; display:flex; background:var(--border); }
+  .statusbar span{ height:100%; display:block; }
+
+  .count{
+    flex:none; font-size:11.5px; font-weight:700; font-variant-numeric:tabular-nums;
+    color:var(--text-secondary); background:var(--page); border:1px solid var(--border);
+    border-radius:20px; padding:2px 8px; min-width:34px; text-align:center;
+  }
+
+  .empty-state{ padding:40px; text-align:center; color:var(--text-muted); font-size:13.5px; }
+
+  footer.note{ margin-top:16px; font-size:12px; color:var(--text-muted); line-height:1.6; max-width:80ch; }
+  footer.note b{ color:var(--text-secondary); }
+
+  @media (prefers-reduced-motion: reduce){ .chev{ transition:none; } }
+
+  @media (max-width:820px){
+    .kpi-row{ grid-template-columns:repeat(2,1fr); }
+  }
+</style>
+
+<div class="app">
+  <header class="top">
+    <div class="eyebrow">Susceptibilidad de Porteo</div>
+    <h1>Registro de Permisionarios y Clientes</h1>
+    <p class="sub">Desglose jerárquico Permisionario → Cliente → Fuente → Tipo de Medidor. Cada nodo agrega sus registros y el estatus de <b style="color:var(--text-secondary)">Portea Nxt</b>.</p>
+  </header>
+
+  <div class="kpi-row">
+    <div class="kpi">
+      <div class="val" id="kpiTotal">—</div>
+      <div class="lbl">Registros totales</div>
+    </div>
+    <div class="kpi">
+      <div class="val" id="kpiPerm">—</div>
+      <div class="lbl">Permisionarios</div>
+    </div>
+    <div class="kpi">
+      <div class="val" id="kpiCli">—</div>
+      <div class="lbl">Clientes identificados</div>
+    </div>
+    <div class="kpi kpi-tipos">
+      <div class="lbl" style="margin-bottom:9px;">Medidores por tipo</div>
+      <div id="tipoList" class="tipo-list"></div>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <div class="search">
+      <input id="searchInput" type="text" placeholder="Buscar permisionario, cliente, tipo de medidor o fuente…" autocomplete="off" />
+    </div>
+    <button class="btn" id="expandAllBtn">Expandir todo</button>
+    <button class="btn" id="collapseAllBtn">Colapsar todo</button>
+  </div>
+
+  <div class="toolbar" style="justify-content:space-between;">
+    <div class="legend">
+      <span style="font-weight:700; color:var(--text-primary); text-transform:uppercase; font-size:11px; letter-spacing:.05em;">Nivel</span>
+      <span class="grp"><span class="dot" style="background:var(--lvl-permisionario)"></span>Permisionario</span>
+      <span class="grp"><span class="dot" style="background:var(--lvl-cliente)"></span>Cliente</span>
+      <span class="grp"><span class="dot" style="background:var(--lvl-fuente)"></span>Fuente</span>
+      <span class="grp"><span class="dot" style="background:var(--lvl-tipo)"></span>Tipo de medidor</span>
+    </div>
+    <div class="legend">
+      <span style="font-weight:700; color:var(--text-primary); text-transform:uppercase; font-size:11px; letter-spacing:.05em;">Portea Nxt</span>
+      <span class="grp"><span class="sw" style="background:var(--st-good)"></span>Listo (SI)</span>
+      <span class="grp"><span class="sw" style="background:var(--st-critical)"></span>No listo (NO)</span>
+      <span class="grp"><span class="sw" style="background:var(--st-warn)"></span>Sin definir</span>
+    </div>
+  </div>
+
+  <div class="tree-frame">
+    <div id="treeWrap">
+      <svg class="links" id="linksSvg"></svg>
+    </div>
+  </div>
+
+  <footer class="note">
+    Fuente: pestaña <b>Susceptibilidad de Porteo</b> — columnas consideradas: Fuente, ID, RPU, Tipo de Medidor, Proyecto, Permisionario, Cliente, Portea Nxt, Descripción, IP. Los conteos por nodo representan número de registros (medidores) agregados en esa rama; el mini-indicador de color resume qué proporción tiene Portea Nxt confirmado.
+  </footer>
+</div>
+
+<script>
+const DATA = {"total":15575,"si":2883,"permisionarios":28,"tree":[{"n":"A3T Abengoa","c":5107,"s":1054,"no":4053,"o":0,"ch":[{"n":"Telcel","c":2592,"s":321,"no":2271,"o":0,"ch":[{"n":"PRIME_READ","c":2592,"s":321,"no":2271,"o":0,"ch":[{"n":"ELSTER","c":2592,"s":321,"no":2271,"o":0}]}]},{"n":"Telmex","c":817,"s":0,"no":817,"o":0,"ch":[{"n":"PRIME_READ","c":817,"s":0,"no":817,"o":0,"ch":[{"n":"ELSTER","c":817,"s":0,"no":817,"o":0}]}]},{"n":"Alsea","c":453,"s":439,"no":14,"o":0,"ch":[{"n":"PRIME_READ","c":453,"s":439,"no":14,"o":0,"ch":[{"n":"ELSTER","c":453,"s":439,"no":14,"o":0}]}]},{"n":"Bachoco","c":236,"s":0,"no":236,"o":0,"ch":[{"n":"PRIME_READ","c":236,"s":0,"no":236,"o":0,"ch":[{"n":"ELSTER","c":236,"s":0,"no":236,"o":0}]}]},{"n":"Sigma","c":216,"s":0,"no":216,"o":0,"ch":[{"n":"PRIME_READ","c":216,"s":0,"no":216,"o":0,"ch":[{"n":"ELSTER","c":216,"s":0,"no":216,"o":0}]}]},{"n":"BACHOCO","c":175,"s":175,"no":0,"o":0,"ch":[{"n":"PRIME_READ","c":175,"s":175,"no":0,"o":0,"ch":[{"n":"ELSTER","c":175,"s":175,"no":0,"o":0}]}]},{"n":"Unidades Comerciales santa Fe","c":138,"s":0,"no":138,"o":0,"ch":[{"n":"PRIME_READ","c":138,"s":0,"no":138,"o":0,"ch":[{"n":"ELSTER","c":138,"s":0,"no":138,"o":0}]}]},{"n":"Modatelas","c":121,"s":0,"no":121,"o":0,"ch":[{"n":"PRIME_READ","c":121,"s":0,"no":121,"o":0,"ch":[{"n":"ELSTER","c":121,"s":0,"no":121,"o":0}]}]},{"n":"Lala","c":114,"s":0,"no":114,"o":0,"ch":[{"n":"PRIME_READ","c":114,"s":0,"no":114,"o":0,"ch":[{"n":"ELSTER","c":114,"s":0,"no":114,"o":0}]}]},{"n":"ALSEA B2","c":95,"s":95,"no":0,"o":0,"ch":[{"n":"PRIME_READ","c":95,"s":95,"no":0,"o":0,"ch":[{"n":"ELSTER","c":95,"s":95,"no":0,"o":0}]}]},{"n":"Starbucks","c":66,"s":0,"no":66,"o":0,"ch":[{"n":"PRIME_READ","c":66,"s":0,"no":66,"o":0,"ch":[{"n":"ELSTER","c":66,"s":0,"no":66,"o":0}]}]},{"n":"Hospital Angeles","c":25,"s":0,"no":25,"o":0,"ch":[{"n":"PRIME_READ","c":25,"s":0,"no":25,"o":0,"ch":[{"n":"ELSTER","c":25,"s":0,"no":25,"o":0}]}]},{"n":"ALSEA","c":15,"s":15,"no":0,"o":0,"ch":[{"n":"PRIME_READ","c":15,"s":15,"no":0,"o":0,"ch":[{"n":"ELSTER","c":15,"s":15,"no":0,"o":0}]}]},{"n":"Hoteles GRT","c":9,"s":0,"no":9,"o":0,"ch":[{"n":"PRIME_READ","c":9,"s":0,"no":9,"o":0,"ch":[{"n":"ELSTER","c":9,"s":0,"no":9,"o":0}]}]},{"n":"PRESIDENTE","c":6,"s":6,"no":0,"o":0,"ch":[{"n":"PRIME_READ","c":6,"s":6,"no":0,"o":0,"ch":[{"n":"ELSTER","c":6,"s":6,"no":0,"o":0}]}]},{"n":"Cadena Tres","c":5,"s":0,"no":5,"o":0,"ch":[{"n":"PRIME_READ","c":5,"s":0,"no":5,"o":0,"ch":[{"n":"ELSTER","c":5,"s":0,"no":5,"o":0}]}]},{"n":"Calpik","c":4,"s":0,"no":4,"o":0,"ch":[{"n":"PRIME_READ","c":4,"s":0,"no":4,"o":0,"ch":[{"n":"ELSTER","c":4,"s":0,"no":4,"o":0}]}]},{"n":"Vips","c":2,"s":0,"no":2,"o":0,"ch":[{"n":"PRIME_READ","c":2,"s":0,"no":2,"o":0,"ch":[{"n":"ELSTER","c":2,"s":0,"no":2,"o":0}]}]},{"n":"Hotel Cancun","c":2,"s":0,"no":2,"o":0,"ch":[{"n":"PRIME_READ","c":2,"s":0,"no":2,"o":0,"ch":[{"n":"ELSTER","c":2,"s":0,"no":2,"o":0}]}]},{"n":"LALA","c":2,"s":2,"no":0,"o":0,"ch":[{"n":"PRIME_READ","c":2,"s":2,"no":0,"o":0,"ch":[{"n":"ELSTER","c":2,"s":2,"no":0,"o":0}]}]},{"n":"Golf Cancun","c":2,"s":0,"no":2,"o":0,"ch":[{"n":"PRIME_READ","c":2,"s":0,"no":2,"o":0,"ch":[{"n":"ELSTER","c":2,"s":0,"no":2,"o":0}]}]},{"n":"Italcafe","c":1,"s":0,"no":1,"o":0,"ch":[{"n":"PRIME_READ","c":1,"s":0,"no":1,"o":0,"ch":[{"n":"ELSTER","c":1,"s":0,"no":1,"o":0}]}]},{"n":"Amigos San Angel","c":1,"s":0,"no":1,"o":0,"ch":[{"n":"PRIME_READ","c":1,"s":0,"no":1,"o":0,"ch":[{"n":"ELSTER","c":1,"s":0,"no":1,"o":0}]}]},{"n":"Sin identificar","c":1,"s":0,"no":1,"o":0,"ch":[{"n":"PRIME_READ","c":1,"s":0,"no":1,"o":0,"ch":[{"n":"ELSTER","c":1,"s":0,"no":1,"o":0}]}]},{"n":"Restaurantes","c":1,"s":0,"no":1,"o":0,"ch":[{"n":"PRIME_READ","c":1,"s":0,"no":1,"o":0,"ch":[{"n":"ELSTER","c":1,"s":0,"no":1,"o":0}]}]},{"n":"Campi alimentos","c":1,"s":0,"no":1,"o":0,"ch":[{"n":"PRIME_READ","c":1,"s":0,"no":1,"o":0,"ch":[{"n":"ELSTER","c":1,"s":0,"no":1,"o":0}]}]},{"n":"Hotel Playamar","c":1,"s":0,"no":1,"o":0,"ch":[{"n":"PRIME_READ","c":1,"s":0,"no":1,"o":0,"ch":[{"n":"ELSTER","c":1,"s":0,"no":1,"o":0}]}]},{"n":"Transporte","c":1,"s":0,"no":1,"o":0,"ch":[{"n":"PRIME_READ","c":1,"s":0,"no":1,"o":0,"ch":[{"n":"ELSTER","c":1,"s":0,"no":1,"o":0}]}]},{"n":"Monte Tangolunda","c":1,"s":0,"no":1,"o":0,"ch":[{"n":"PRIME_READ","c":1,"s":0,"no":1,"o":0,"ch":[{"n":"ELSTER","c":1,"s":0,"no":1,"o":0}]}]},{"n":"Imagen Radio","c":1,"s":0,"no":1,"o":0,"ch":[{"n":"PRIME_READ","c":1,"s":0,"no":1,"o":0,"ch":[{"n":"ELSTER","c":1,"s":0,"no":1,"o":0}]}]},{"n":"EXTRUSIONES","c":1,"s":1,"no":0,"o":0,"ch":[{"n":"PRIME_READ","c":1,"s":1,"no":0,"o":0,"ch":[{"n":"ELSTER","c":1,"s":1,"no":0,"o":0}]}]},{"n":"Hoteles","c":1,"s":0,"no":1,"o":0,"ch":[{"n":"PRIME_READ","c":1,"s":0,"no":1,"o":0,"ch":[{"n":"ELSTER","c":1,"s":0,"no":1,"o":0}]}]},{"n":"Parque Real diamante","c":1,"s":0,"no":1,"o":0,"ch":[{"n":"PRIME_READ","c":1,"s":0,"no":1,"o":0,"ch":[{"n":"ELSTER","c":1,"s":0,"no":1,"o":0}]}]}]},{"n":"Acciona","c":2,"s":0,"no":0,"o":2,"ch":[{"n":"Sin dato","c":2,"s":0,"no":0,"o":2,"ch":[{"n":"PRIME_READ","c":2,"s":0,"no":0,"o":2,"ch":[{"n":"ELSTER","c":2,"s":0,"no":0,"o":2}]}]}]},{"n":"Alsea","c":1617,"s":0,"no":0,"o":1617,"ch":[{"n":"Alsea","c":1617,"s":0,"no":0,"o":1617,"ch":[{"n":"PRIME_READ","c":1617,"s":0,"no":0,"o":1617,"ch":[{"n":"ELSTER","c":1617,"s":0,"no":0,"o":1617}]}]}]},{"n":"AT&T","c":1103,"s":1103,"no":0,"o":0,"ch":[{"n":"AT&T","c":1103,"s":1103,"no":0,"o":0,"ch":[{"n":"PRIME_READ","c":1103,"s":1103,"no":0,"o":0,"ch":[{"n":"ELSTER","c":1103,"s":1103,"no":0,"o":0}]}]}]},{"n":"Atco EGO","c":217,"s":0,"no":0,"o":217,"ch":[{"n":"Sin dato","c":217,"s":0,"no":0,"o":217,"ch":[{"n":"PRIME_READ","c":217,"s":0,"no":0,"o":217,"ch":[{"n":"ELSTER","c":217,"s":0,"no":0,"o":217}]}]}]},{"n":"Balam La Laguna","c":1400,"s":0,"no":0,"o":1400,"ch":[{"n":"Sin dato","c":1400,"s":0,"no":0,"o":1400,"ch":[{"n":"PRIME_READ","c":1400,"s":0,"no":0,"o":1400,"ch":[{"n":"ELSTER","c":1400,"s":0,"no":0,"o":1400}]}]}]},{"n":"Cemex Eurus","c":351,"s":0,"no":0,"o":351,"ch":[{"n":"Sin dato","c":351,"s":0,"no":0,"o":351,"ch":[{"n":"PRIME_READ","c":351,"s":0,"no":0,"o":351,"ch":[{"n":"ELSTER","c":351,"s":0,"no":0,"o":351}]}]}]},{"n":"Demex Bimbo","c":242,"s":0,"no":0,"o":242,"ch":[{"n":"Bimbo","c":242,"s":0,"no":0,"o":242,"ch":[{"n":"PRIME_READ","c":170,"s":0,"no":0,"o":170,"ch":[{"n":"ELSTER","c":170,"s":0,"no":0,"o":170}]},{"n":"PME","c":72,"s":0,"no":0,"o":72,"ch":[{"n":"ION 8650","c":72,"s":0,"no":0,"o":72}]}]}]},{"n":"Demex Waltmart","c":316,"s":0,"no":0,"o":316,"ch":[{"n":"Sin dato","c":316,"s":0,"no":0,"o":316,"ch":[{"n":"PRIME_READ","c":316,"s":0,"no":0,"o":316,"ch":[{"n":"ELSTER","c":316,"s":0,"no":0,"o":316}]}]}]},{"n":"EDI Eoliatec del Istmo","c":84,"s":2,"no":82,"o":0,"ch":[{"n":"EDI Eoliatec del Istmo","c":68,"s":0,"no":68,"o":0,"ch":[{"n":"PRIME_READ","c":68,"s":0,"no":68,"o":0,"ch":[{"n":"ELSTER","c":68,"s":0,"no":68,"o":0}]}]},{"n":"Sin dato","c":14,"s":0,"no":14,"o":0,"ch":[{"n":"PRIME_READ","c":14,"s":0,"no":14,"o":0,"ch":[{"n":"ELSTER","c":14,"s":0,"no":14,"o":0}]}]},{"n":"EDI","c":2,"s":2,"no":0,"o":0,"ch":[{"n":"PRIME_READ","c":2,"s":2,"no":0,"o":0,"ch":[{"n":"ELSTER","c":2,"s":2,"no":0,"o":0}]}]}]},{"n":"EDP","c":39,"s":0,"no":0,"o":39,"ch":[{"n":"Sin dato","c":39,"s":0,"no":0,"o":39,"ch":[{"n":"PME","c":39,"s":0,"no":0,"o":39,"ch":[{"n":"ION 8650","c":22,"s":0,"no":0,"o":22},{"n":"Sin tipo","c":17,"s":0,"no":0,"o":17}]}]}]},{"n":"EDP Eoliatec del Pacifico","c":39,"s":0,"no":0,"o":39,"ch":[{"n":"Sin dato","c":39,"s":0,"no":0,"o":39,"ch":[{"n":"PRIME_READ","c":39,"s":0,"no":0,"o":39,"ch":[{"n":"ELSTER","c":39,"s":0,"no":0,"o":39}]}]}]},{"n":"EGU","c":699,"s":699,"no":0,"o":0,"ch":[{"n":"Nutrisa","c":193,"s":193,"no":0,"o":0,"ch":[{"n":"UDIS","c":193,"s":193,"no":0,"o":0,"ch":[{"n":"Siemens","c":193,"s":193,"no":0,"o":0}]}]},{"n":"CI Banco","c":117,"s":117,"no":0,"o":0,"ch":[{"n":"UDIS","c":117,"s":117,"no":0,"o":0,"ch":[{"n":"Siemens","c":117,"s":117,"no":0,"o":0}]}]},{"n":"Super aki","c":93,"s":93,"no":0,"o":0,"ch":[{"n":"UDIS","c":93,"s":93,"no":0,"o":0,"ch":[{"n":"Siemens","c":93,"s":93,"no":0,"o":0}]}]},{"n":"Bizzarro","c":93,"s":93,"no":0,"o":0,"ch":[{"n":"UDIS","c":93,"s":93,"no":0,"o":0,"ch":[{"n":"Siemens","c":93,"s":93,"no":0,"o":0}]}]},{"n":"Juguetron","c":63,"s":63,"no":0,"o":0,"ch":[{"n":"UDIS","c":63,"s":63,"no":0,"o":0,"ch":[{"n":"Siemens","c":63,"s":63,"no":0,"o":0}]}]},{"n":"Cinepolis","c":63,"s":63,"no":0,"o":0,"ch":[{"n":"UDIS","c":55,"s":55,"no":0,"o":0,"ch":[{"n":"Siemens","c":55,"s":55,"no":0,"o":0}]},{"n":"PME","c":8,"s":8,"no":0,"o":0,"ch":[{"n":"ION 8650","c":8,"s":8,"no":0,"o":0}]}]},{"n":"Chilimbalam","c":39,"s":39,"no":0,"o":0,"ch":[{"n":"UDIS","c":39,"s":39,"no":0,"o":0,"ch":[{"n":"Siemens","c":39,"s":39,"no":0,"o":0}]}]},{"n":"MYT","c":11,"s":11,"no":0,"o":0,"ch":[{"n":"UDIS","c":11,"s":11,"no":0,"o":0,"ch":[{"n":"Siemens","c":11,"s":11,"no":0,"o":0}]}]},{"n":"Logistica 365","c":4,"s":4,"no":0,"o":0,"ch":[{"n":"UDIS","c":4,"s":4,"no":0,"o":0,"ch":[{"n":"Siemens","c":4,"s":4,"no":0,"o":0}]}]},{"n":"ANDADORES GASTRONOMICOS","c":3,"s":3,"no":0,"o":0,"ch":[{"n":"UDIS","c":3,"s":3,"no":0,"o":0,"ch":[{"n":"Siemens","c":3,"s":3,"no":0,"o":0}]}]},{"n":"Nuevas Cantinas","c":3,"s":3,"no":0,"o":0,"ch":[{"n":"UDIS","c":3,"s":3,"no":0,"o":0,"ch":[{"n":"Siemens","c":3,"s":3,"no":0,"o":0}]}]},{"n":"EFFEM","c":3,"s":3,"no":0,"o":0,"ch":[{"n":"PME","c":3,"s":3,"no":0,"o":0,"ch":[{"n":"ION 8650","c":3,"s":3,"no":0,"o":0}]}]},{"n":"Ferrocarriles","c":3,"s":3,"no":0,"o":0,"ch":[{"n":"UDIS","c":2,"s":2,"no":0,"o":0,"ch":[{"n":"Siemens","c":2,"s":2,"no":0,"o":0}]},{"n":"PME","c":1,"s":1,"no":0,"o":0,"ch":[{"n":"ION 8650","c":1,"s":1,"no":0,"o":0}]}]},{"n":"Club 51","c":2,"s":2,"no":0,"o":0,"ch":[{"n":"UDIS","c":2,"s":2,"no":0,"o":0,"ch":[{"n":"Siemens","c":2,"s":2,"no":0,"o":0}]}]},{"n":"MAITE LEGORRETA MOLINA","c":1,"s":1,"no":0,"o":0,"ch":[{"n":"UDIS","c":1,"s":1,"no":0,"o":0,"ch":[{"n":"Siemens","c":1,"s":1,"no":0,"o":0}]}]},{"n":"SOFIA DE GARAY MONTERO","c":1,"s":1,"no":0,"o":0,"ch":[{"n":"UDIS","c":1,"s":1,"no":0,"o":0,"ch":[{"n":"Siemens","c":1,"s":1,"no":0,"o":0}]}]},{"n":"MARIA GABRIELA BERRONDO AVALOS","c":1,"s":1,"no":0,"o":0,"ch":[{"n":"UDIS","c":1,"s":1,"no":0,"o":0,"ch":[{"n":"Siemens","c":1,"s":1,"no":0,"o":0}]}]},{"n":"Cacahuates","c":1,"s":1,"no":0,"o":0,"ch":[{"n":"UDIS","c":1,"s":1,"no":0,"o":0,"ch":[{"n":"Siemens","c":1,"s":1,"no":0,"o":0}]}]},{"n":"IMC","c":1,"s":1,"no":0,"o":0,"ch":[{"n":"UDIS","c":1,"s":1,"no":0,"o":0,"ch":[{"n":"Siemens","c":1,"s":1,"no":0,"o":0}]}]},{"n":"Restaurantes Moshi","c":1,"s":1,"no":0,"o":0,"ch":[{"n":"UDIS","c":1,"s":1,"no":0,"o":0,"ch":[{"n":"Siemens","c":1,"s":1,"no":0,"o":0}]}]},{"n":"JORGE CARLOS CAMPOS ALVAREZ TOSTADO","c":1,"s":1,"no":0,"o":0,"ch":[{"n":"UDIS","c":1,"s":1,"no":0,"o":0,"ch":[{"n":"Siemens","c":1,"s":1,"no":0,"o":0}]}]},{"n":"AVOMEX","c":1,"s":1,"no":0,"o":0,"ch":[{"n":"PME","c":1,"s":1,"no":0,"o":0,"ch":[{"n":"ION 8650","c":1,"s":1,"no":0,"o":0}]}]},{"n":"CENTRO DEPORTIVO ISRAELITA","c":1,"s":1,"no":0,"o":0,"ch":[{"n":"PME","c":1,"s":1,"no":0,"o":0,"ch":[{"n":"ION 8650","c":1,"s":1,"no":0,"o":0}]}]}]},{"n":"EGU_BAJAS","c":25,"s":25,"no":0,"o":0,"ch":[{"n":"Bajas","c":25,"s":25,"no":0,"o":0,"ch":[{"n":"UDIS","c":25,"s":25,"no":0,"o":0,"ch":[{"n":"Siemens","c":25,"s":25,"no":0,"o":0}]}]}]},{"n":"Eolica el Retiro","c":20,"s":0,"no":0,"o":20,"ch":[{"n":"Sin dato","c":20,"s":0,"no":0,"o":20,"ch":[{"n":"PME","c":20,"s":0,"no":0,"o":20,"ch":[{"n":"Sin tipo","c":15,"s":0,"no":0,"o":15},{"n":"ION 8650","c":5,"s":0,"no":0,"o":5}]}]}]},{"n":"Fenix","c":26,"s":0,"no":26,"o":0,"ch":[{"n":"Play City Jalisco","c":6,"s":0,"no":6,"o":0,"ch":[{"n":"PRIME_READ","c":6,"s":0,"no":6,"o":0,"ch":[{"n":"ELSTER","c":6,"s":0,"no":6,"o":0}]}]},{"n":"Play City Noroeste","c":4,"s":0,"no":4,"o":0,"ch":[{"n":"PRIME_READ","c":4,"s":0,"no":4,"o":0,"ch":[{"n":"ELSTER","c":4,"s":0,"no":4,"o":0}]}]},{"n":"Play City Norte","c":4,"s":0,"no":4,"o":0,"ch":[{"n":"PRIME_READ","c":4,"s":0,"no":4,"o":0,"ch":[{"n":"ELSTER","c":4,"s":0,"no":4,"o":0}]}]},{"n":"Play City VMS","c":4,"s":0,"no":4,"o":0,"ch":[{"n":"PRIME_READ","c":4,"s":0,"no":4,"o":0,"ch":[{"n":"ELSTER","c":4,"s":0,"no":4,"o":0}]}]},{"n":"Play City Centro Sur","c":2,"s":0,"no":2,"o":0,"ch":[{"n":"PRIME_READ","c":2,"s":0,"no":2,"o":0,"ch":[{"n":"ELSTER","c":2,"s":0,"no":2,"o":0}]}]},{"n":"Play City Bajio","c":2,"s":0,"no":2,"o":0,"ch":[{"n":"PRIME_READ","c":2,"s":0,"no":2,"o":0,"ch":[{"n":"ELSTER","c":2,"s":0,"no":2,"o":0}]}]},{"n":"Play City Oriente","c":2,"s":0,"no":2,"o":0,"ch":[{"n":"PRIME_READ","c":2,"s":0,"no":2,"o":0,"ch":[{"n":"ELSTER","c":2,"s":0,"no":2,"o":0}]}]},{"n":"Play City VMC","c":2,"s":0,"no":2,"o":0,"ch":[{"n":"PRIME_READ","c":2,"s":0,"no":2,"o":0,"ch":[{"n":"ELSTER","c":2,"s":0,"no":2,"o":0}]}]}]},{"n":"Grupo Dragon Bajio Los Altos","c":1553,"s":0,"no":0,"o":1553,"ch":[{"n":"Sin dato","c":1553,"s":0,"no":0,"o":1553,"ch":[{"n":"PRIME_READ","c":1553,"s":0,"no":0,"o":1553,"ch":[{"n":"ELSTER","c":1553,"s":0,"no":0,"o":1553}]}]}]},{"n":"Grupo Dragon Sureste Arriaga","c":702,"s":0,"no":0,"o":702,"ch":[{"n":"Sin dato","c":702,"s":0,"no":0,"o":702,"ch":[{"n":"PRIME_READ","c":702,"s":0,"no":0,"o":702,"ch":[{"n":"ELSTER","c":702,"s":0,"no":0,"o":702}]}]}]},{"n":"Grupo Mexico Eolica el Retiro","c":369,"s":0,"no":0,"o":369,"ch":[{"n":"Sin dato","c":369,"s":0,"no":0,"o":369,"ch":[{"n":"PRIME_READ","c":369,"s":0,"no":0,"o":369,"ch":[{"n":"ELSTER","c":369,"s":0,"no":0,"o":369}]}]}]},{"n":"Iberdrola Bajio","c":42,"s":0,"no":0,"o":42,"ch":[{"n":"Sin dato","c":42,"s":0,"no":0,"o":42,"ch":[{"n":"PRIME_READ","c":42,"s":0,"no":0,"o":42,"ch":[{"n":"ELSTER","c":42,"s":0,"no":0,"o":42}]}]}]},{"n":"Iberdrola GCentro ICR6","c":29,"s":0,"no":0,"o":29,"ch":[{"n":"Sin dato","c":29,"s":0,"no":0,"o":29,"ch":[{"n":"UDIS","c":29,"s":0,"no":0,"o":29,"ch":[{"n":"Sin tipo","c":29,"s":0,"no":0,"o":29}]}]}]},{"n":"Iberdrola Tampico","c":36,"s":0,"no":0,"o":36,"ch":[{"n":"Sin dato","c":36,"s":0,"no":0,"o":36,"ch":[{"n":"UDIS","c":36,"s":0,"no":0,"o":36,"ch":[{"n":"Sin tipo","c":36,"s":0,"no":0,"o":36}]}]}]},{"n":"Infra","c":830,"s":0,"no":0,"o":830,"ch":[{"n":"Sin dato","c":830,"s":0,"no":0,"o":830,"ch":[{"n":"UDIS","c":415,"s":0,"no":0,"o":415,"ch":[{"n":"Sin tipo","c":415,"s":0,"no":0,"o":415}]},{"n":"PRIME_READ","c":415,"s":0,"no":0,"o":415,"ch":[{"n":"ELSTER","c":415,"s":0,"no":0,"o":415}]}]}]},{"n":"Naturgy","c":124,"s":0,"no":124,"o":0,"ch":[{"n":"Naturgy","c":124,"s":0,"no":124,"o":0,"ch":[{"n":"PRIME_READ","c":124,"s":0,"no":124,"o":0,"ch":[{"n":"ELSTER","c":124,"s":0,"no":124,"o":0}]}]}]},{"n":"PE Ingenio Sureste","c":420,"s":0,"no":420,"o":0,"ch":[{"n":"P ingenio","c":207,"s":0,"no":207,"o":0,"ch":[{"n":"PRIME_READ","c":207,"s":0,"no":207,"o":0,"ch":[{"n":"ELSTER","c":207,"s":0,"no":207,"o":0}]}]},{"n":"Walmart","c":110,"s":0,"no":110,"o":0,"ch":[{"n":"PRIME_READ","c":110,"s":0,"no":110,"o":0,"ch":[{"n":"ELSTER","c":110,"s":0,"no":110,"o":0}]}]},{"n":"Bodega Express","c":71,"s":0,"no":71,"o":0,"ch":[{"n":"PRIME_READ","c":71,"s":0,"no":71,"o":0,"ch":[{"n":"ELSTER","c":71,"s":0,"no":71,"o":0}]}]},{"n":"Suburbia","c":15,"s":0,"no":15,"o":0,"ch":[{"n":"PRIME_READ","c":15,"s":0,"no":15,"o":0,"ch":[{"n":"ELSTER","c":15,"s":0,"no":15,"o":0}]}]},{"n":"Bodega","c":11,"s":0,"no":11,"o":0,"ch":[{"n":"PRIME_READ","c":11,"s":0,"no":11,"o":0,"ch":[{"n":"ELSTER","c":11,"s":0,"no":11,"o":0}]}]},{"n":"Superama","c":4,"s":0,"no":4,"o":0,"ch":[{"n":"PRIME_READ","c":4,"s":0,"no":4,"o":0,"ch":[{"n":"ELSTER","c":4,"s":0,"no":4,"o":0}]}]},{"n":"Sam´s","c":2,"s":0,"no":2,"o":0,"ch":[{"n":"PRIME_READ","c":2,"s":0,"no":2,"o":0,"ch":[{"n":"ELSTER","c":2,"s":0,"no":2,"o":0}]}]}]},{"n":"Sanchez","c":5,"s":0,"no":0,"o":5,"ch":[{"n":"Sin dato","c":5,"s":0,"no":0,"o":5,"ch":[{"n":"PRIME_READ","c":5,"s":0,"no":0,"o":5,"ch":[{"n":"ELSTER","c":5,"s":0,"no":0,"o":5}]}]}]},{"n":"TRE","c":37,"s":0,"no":0,"o":37,"ch":[{"n":"Sin dato","c":37,"s":0,"no":0,"o":37,"ch":[{"n":"PRIME_READ","c":20,"s":0,"no":0,"o":20,"ch":[{"n":"ELSTER","c":20,"s":0,"no":0,"o":20}]},{"n":"PME","c":17,"s":0,"no":0,"o":17,"ch":[{"n":"Sin tipo","c":12,"s":0,"no":0,"o":12},{"n":"ION 8650","c":5,"s":0,"no":0,"o":5}]}]}]},{"n":"Vesta","c":141,"s":0,"no":0,"o":141,"ch":[{"n":"Sin dato","c":141,"s":0,"no":0,"o":141,"ch":[{"n":"UDIS","c":93,"s":0,"no":0,"o":93,"ch":[{"n":"Sin tipo","c":93,"s":0,"no":0,"o":93}]},{"n":"PME","c":48,"s":0,"no":0,"o":48,"ch":[{"n":"Sin tipo","c":46,"s":0,"no":0,"o":46},{"n":"ION 8650","c":2,"s":0,"no":0,"o":2}]}]}]}]};
+
+const COLW = 312, NODEW = 288, ROWH = 34, NODEH = 30;
+const LEVEL_NAMES = ['Permisionario','Cliente','Fuente','Tipo de medidor'];
+
+function stripAccents(s){ return s.normalize('NFD').replace(/[̀-ͯ]/g,''); }
+
+let idSeq = 0;
+function buildTree(nodes, parent, depth){
+  for(const node of nodes){
+    node.id = 'n' + (idSeq++);
+    node.parent = parent;
+    node.depth = depth;
+    node._norm = stripAccents(node.n).toLowerCase();
+    if(node.ch && node.ch.length){
+      buildTree(node.ch, node, depth+1);
+    }
+  }
+}
+buildTree(DATA.tree, null, 0);
+
+const collapsed = new Set();
+function collapseAllInit(nodes){
+  for(const node of nodes){
+    if(node.ch && node.ch.length){
+      collapsed.add(node.id);
+      collapseAllInit(node.ch);
+    }
+  }
+}
+collapseAllInit(DATA.tree);
+
+// ---- KPIs ----
+let totalClientes = 0;
+for(const p of DATA.tree){ totalClientes += (p.ch ? p.ch.length : 0); }
+document.getElementById('kpiTotal').textContent = DATA.total.toLocaleString('es-MX');
+document.getElementById('kpiPerm').textContent = DATA.permisionarios.toLocaleString('es-MX');
+document.getElementById('kpiCli').textContent = totalClientes.toLocaleString('es-MX');
+
+function tipoTotals(){
+  const totals = {};
+  (function walk(nodes){
+    for(const n of nodes){
+      if(n.ch && n.ch.length){ walk(n.ch); }
+      else { totals[n.n] = (totals[n.n]||0) + n.c; }
+    }
+  })(DATA.tree);
+  return Object.entries(totals).sort((a,b)=>b[1]-a[1]);
+}
+
+const tipoList = document.getElementById('tipoList');
+const tipos = tipoTotals();
+const tipoMax = tipos.length ? tipos[0][1] : 1;
+tipoList.innerHTML = tipos.map(([name, count]) => `
+  <div class="tipo-row">
+    <span class="tname" title="${name}">${name}</span>
+    <span class="tbar"><span style="width:${(count/tipoMax*100).toFixed(1)}%"></span></span>
+    <span class="tval">${count.toLocaleString('es-MX')}</span>
+  </div>
+`).join('');
+
+// ---- search state ----
+let searchQuery = '';
+
+function markMatches(nodes){
+  let any = false;
+  for(const node of nodes){
+    node._selfMatch = searchQuery && node._norm.includes(searchQuery);
+    let childInc = false;
+    if(node.ch) childInc = markMatches(node.ch);
+    node._include = !searchQuery || node._selfMatch || childInc;
+    if(node._include) any = true;
+  }
+  return any;
+}
+
+// ---- layout ----
+let rowCounter, maxDepth;
+function layout(nodes, depth, forceFull){
+  maxDepth = Math.max(maxDepth, depth);
+  for(const node of nodes){
+    if(searchQuery && !node._include){ continue; }
+    node.x = depth*COLW;
+    const full = forceFull || node._selfMatch;
+    const expand = searchQuery ? (full || node._include) : !collapsed.has(node.id);
+    if(node.ch && node.ch.length && expand){
+      layout(node.ch, depth+1, full);
+      const vis = node.ch.filter(c => !searchQuery || c._include);
+      if(vis.length){
+        node.y = (vis[0].y + vis[vis.length-1].y)/2;
+      } else {
+        node.y = rowCounter*ROWH + ROWH/2; rowCounter++;
+      }
+    } else {
+      node.y = rowCounter*ROWH + ROWH/2; rowCounter++;
+    }
+  }
+}
+
+function collectVisible(nodes, parent, depth, out, links, forceFull){
+  for(const node of nodes){
+    if(searchQuery && !node._include){ continue; }
+    out.push(node);
+    if(parent) links.push([parent, node]);
+    const full = forceFull || node._selfMatch;
+    const expand = searchQuery ? (full || node._include) : !collapsed.has(node.id);
+    if(node.ch && node.ch.length && expand){
+      collectVisible(node.ch, node, depth+1, out, links, full);
+    }
+  }
+}
+
+function statusSegments(node){
+  const total = node.c || 1;
+  return [
+    {cls:'good', v:node.s},
+    {cls:'critical', v:node.no},
+    {cls:'warn', v:node.o}
+  ].filter(s=>s.v>0).map(s=>({...s, pct: s.v/total*100}));
+}
+
+function highlightLabel(name){
+  if(!searchQuery) return name;
+  const norm = stripAccents(name).toLowerCase();
+  const idx = norm.indexOf(searchQuery);
+  if(idx === -1) return name;
+  return name.slice(0,idx) + '<mark>' + name.slice(idx, idx+searchQuery.length) + '</mark>' + name.slice(idx+searchQuery.length);
+}
+
+function render(){
+  markMatches(DATA.tree);
+  rowCounter = 0; maxDepth = 0;
+  layout(DATA.tree, 0, false);
+
+  const out = [], links = [];
+  collectVisible(DATA.tree, null, 0, out, links, false);
+
+  const wrap = document.getElementById('treeWrap');
+  const svg = document.getElementById('linksSvg');
+
+  const width = (maxDepth+1)*COLW + 20;
+  const height = Math.max(rowCounter*ROWH, ROWH);
+
+  wrap.style.width = width + 'px';
+  wrap.style.height = height + 'px';
+  svg.setAttribute('width', width);
+  svg.setAttribute('height', height);
+  svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+
+  let pathHtml = '';
+  for(const [p,c] of links){
+    const x1 = p.x + NODEW, y1 = p.y;
+    const x2 = c.x, y2 = c.y;
+    const mx = (x1+x2)/2;
+    pathHtml += `<path d="M ${x1} ${y1} C ${mx} ${y1}, ${mx} ${y2}, ${x2} ${y2}" fill="none" stroke="var(--link-stroke)" stroke-width="1.6" />`;
+  }
+  svg.innerHTML = pathHtml;
+
+  // remove old nodes
+  wrap.querySelectorAll('.node').forEach(n=>n.remove());
+
+  const frag = document.createDocumentFragment();
+  for(const node of out){
+    const hasChildren = !!(node.ch && node.ch.length);
+    const isOpen = searchQuery ? (node._selfMatch || node._include) : !collapsed.has(node.id);
+    const div = document.createElement('div');
+    div.className = 'node lvl-' + node.depth + (hasChildren ? ' clickable' : '');
+    div.style.left = node.x + 'px';
+    div.style.top = (node.y - NODEH/2) + 'px';
+    div.style.width = NODEW + 'px';
+    div.style.height = NODEH + 'px';
+    div.setAttribute('data-id', node.id);
+    div.title = LEVEL_NAMES[node.depth] + ': ' + node.n + ' — ' + node.c.toLocaleString('es-MX') + ' registros';
+    if(hasChildren){
+      div.tabIndex = 0;
+      div.setAttribute('role','button');
+      div.setAttribute('aria-expanded', isOpen ? 'true':'false');
+    }
+
+    const chev = hasChildren
+      ? `<span class="chev ${isOpen ? 'open':''}"></span>`
+      : `<span class="chev spacer"></span>`;
+
+    const segs = statusSegments(node);
+    const bar = segs.map(s=>`<span style="width:${s.pct}%; background:var(--st-${s.cls})"></span>`).join('');
+
+    div.innerHTML = `
+      ${chev}
+      <span class="label">${highlightLabel(node.n)}</span>
+      <span class="statusbar">${bar}</span>
+      <span class="count">${node.c.toLocaleString('es-MX')}</span>
+    `;
+
+    if(hasChildren){
+      div.addEventListener('click', ()=>{
+        if(collapsed.has(node.id)) collapsed.delete(node.id); else collapsed.add(node.id);
+        render();
+      });
+      div.addEventListener('keydown', (e)=>{
+        if(e.key === 'Enter' || e.key === ' '){
+          e.preventDefault();
+          if(collapsed.has(node.id)) collapsed.delete(node.id); else collapsed.add(node.id);
+          render();
+        }
+      });
+    }
+    frag.appendChild(div);
+  }
+  wrap.appendChild(frag);
+
+  if(out.length === 0){
+    const empty = document.createElement('div');
+    empty.className = 'empty-state';
+    empty.textContent = 'Sin coincidencias para “' + searchQueryRaw + '”.';
+    wrap.appendChild(empty);
+  }
+}
+
+let searchQueryRaw = '';
+document.getElementById('searchInput').addEventListener('input', (e)=>{
+  searchQueryRaw = e.target.value.trim();
+  searchQuery = stripAccents(searchQueryRaw).toLowerCase();
+  render();
+});
+
+document.getElementById('expandAllBtn').addEventListener('click', ()=>{
+  collapsed.clear();
+  render();
+});
+document.getElementById('collapseAllBtn').addEventListener('click', ()=>{
+  collapsed.clear();
+  collapseAllInit(DATA.tree);
+  render();
+});
+
+render();
+</script>
