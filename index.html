@@ -128,7 +128,7 @@
   .brand-mark img{ display:block; height:78px; width:auto; }
 
   .kpi-row{
-    display:grid; grid-template-columns:repeat(4,1fr); gap:12px;
+    display:grid; grid-template-columns:repeat(5,1fr); gap:12px;
     margin:20px 0 18px;
   }
   .kpi{
@@ -268,6 +268,9 @@
 
   @media (prefers-reduced-motion: reduce){ .chev{ transition:none; } }
 
+  @media (max-width:1100px){
+    .kpi-row{ grid-template-columns:repeat(3,1fr); }
+  }
   @media (max-width:820px){
     .kpi-row{ grid-template-columns:repeat(2,1fr); }
   }
@@ -301,6 +304,10 @@
     <div class="kpi kpi-tipos">
       <div class="lbl" style="margin-bottom:9px;">Medidores por tipo</div>
       <div id="tipoList" class="tipo-list"></div>
+    </div>
+    <div class="kpi kpi-tipos">
+      <div class="lbl" style="margin-bottom:9px;">Portea Nxt</div>
+      <div id="porteoList" class="tipo-list"></div>
     </div>
   </div>
 
@@ -422,6 +429,22 @@ tipoList.innerHTML = tipos.map(([name, count]) => `
     <span class="tname" title="${name}">${name}</span>
     <span class="tbar"><span style="width:${(count/tipoMax*100).toFixed(1)}%"></span></span>
     <span class="tval">${count.toLocaleString('es-MX')}</span>
+  </div>
+`).join('');
+
+let totalSI = 0, totalNO = 0, totalPorDefinir = 0;
+for(const p of DATA.tree){ totalSI += p.s; totalNO += p.no; totalPorDefinir += p.o; }
+const porteoRows = [
+  {label:'SI', count: totalSI, cssVar:'--st-good'},
+  {label:'NO', count: totalNO, cssVar:'--st-critical'},
+  {label:'Por Definir', count: totalPorDefinir, cssVar:'--st-warn'}
+];
+const porteoMax = Math.max(totalSI, totalNO, totalPorDefinir, 1);
+document.getElementById('porteoList').innerHTML = porteoRows.map(r => `
+  <div class="tipo-row">
+    <span class="tname" title="${r.label}">${r.label}</span>
+    <span class="tbar"><span style="width:${(r.count/porteoMax*100).toFixed(1)}%; background:var(${r.cssVar})"></span></span>
+    <span class="tval">${r.count.toLocaleString('es-MX')}</span>
   </div>
 `).join('');
 
