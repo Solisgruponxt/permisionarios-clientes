@@ -316,9 +316,9 @@
   <div class="toolbar">
     <div class="chip-group" id="porteoChipGroup">
       <span class="filter-label">Portea Nxt</span>
-      <button class="chip chip-good active" data-val="si" type="button">Listo</button>
-      <button class="chip chip-critical active" data-val="no" type="button">No listo</button>
-      <button class="chip chip-warn active" data-val="otro" type="button">Sin definir</button>
+      <button class="chip chip-good active" data-val="si" type="button">SI</button>
+      <button class="chip chip-critical active" data-val="no" type="button">NO</button>
+      <button class="chip chip-warn active" data-val="otro" type="button">Por Definir</button>
     </div>
     <div class="chip-group" id="tipoChipGroup">
       <span class="filter-label">Tipo de medidor</span>
@@ -344,9 +344,9 @@
     </div>
     <div class="legend">
       <span style="font-weight:700; color:var(--text-primary); text-transform:uppercase; font-size:11px; letter-spacing:.05em;">Portea Nxt</span>
-      <span class="grp"><span class="sw" style="background:var(--st-good)"></span>Listo (SI)</span>
-      <span class="grp"><span class="sw" style="background:var(--st-critical)"></span>No listo (NO)</span>
-      <span class="grp"><span class="sw" style="background:var(--st-warn)"></span>Sin definir</span>
+      <span class="grp"><span class="sw" style="background:var(--st-good)"></span>SI</span>
+      <span class="grp"><span class="sw" style="background:var(--st-critical)"></span>NO</span>
+      <span class="grp"><span class="sw" style="background:var(--st-warn)"></span>Por Definir</span>
     </div>
   </div>
 
@@ -796,7 +796,7 @@ function downloadXlsx(filename, headers, rows){
 
 document.getElementById('exportBtn').addEventListener('click', ()=>{
   const rows = flattenForExport();
-  const headers = ['Permisionario','Cliente','Fuente','Tipo de Medidor','Division','Ing. CFE','Registros','Listo (SI)','No listo (NO)','Sin definir'];
+  const headers = ['Permisionario','Cliente','Fuente','Tipo de Medidor','Division','Ing. CFE','Registros','SI','NO','Por Definir'];
   downloadXlsx('Registro_Permisionarios_Clientes.xlsx', headers, rows);
 });
 
