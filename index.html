@@ -156,6 +156,9 @@
   }
   .btn:hover{ background:var(--surface-card-hi); color:var(--text-primary); }
   .btn:focus-visible{ outline:2px solid var(--focus-ring); outline-offset:1px; }
+  .btn-primary{ background:var(--lvl-permisionario); border-color:var(--lvl-permisionario); color:#fff; }
+  .btn-primary:hover{ background:var(--lvl-permisionario); color:#fff; filter:brightness(1.08); }
+  .btn-primary:disabled{ opacity:.5; cursor:default; filter:none; }
 
   .legend{ display:flex; align-items:center; gap:14px; flex-wrap:wrap; font-size:12px; color:var(--text-secondary); }
   .legend .grp{ display:flex; align-items:center; gap:6px; }
@@ -163,10 +166,28 @@
   .legend .divider{ width:1px; height:16px; background:var(--border-strong); }
   .legend .sw{ width:9px; height:9px; border-radius:2px; flex:none; }
 
+  .filter-label{
+    font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em;
+    color:var(--text-muted); margin-right:2px; flex:none;
+  }
+  .chip-group{ display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+  .chip{
+    font-size:12px; font-weight:600; padding:5px 11px; border-radius:20px;
+    border:1px solid var(--border-strong); background:var(--surface-card); color:var(--text-muted);
+    cursor:pointer; white-space:nowrap;
+  }
+  .chip:hover{ border-color:var(--focus-ring); }
+  .chip:focus-visible{ outline:2px solid var(--focus-ring); outline-offset:1px; }
+  .chip.active.chip-good{ background:color-mix(in srgb, var(--st-good) 16%, var(--surface-card)); border-color:var(--st-good); color:var(--st-good); }
+  .chip.active.chip-critical{ background:color-mix(in srgb, var(--st-critical) 16%, var(--surface-card)); border-color:var(--st-critical); color:var(--st-critical); }
+  .chip.active.chip-warn{ background:color-mix(in srgb, var(--st-warn) 18%, var(--surface-card)); border-color:var(--st-warn); color:var(--st-warn); }
+  .chip.active.chip-tipo{ background:color-mix(in srgb, var(--lvl-tipo) 16%, var(--surface-card)); border-color:var(--lvl-tipo); color:var(--lvl-tipo); }
+  .filter-summary{ font-size:12px; color:var(--text-muted); margin-left:auto; white-space:nowrap; }
+
   .tree-frame{
     background:var(--surface-card); border:1px solid var(--border); border-radius:12px;
     box-shadow:var(--shadow); overflow:auto; position:relative;
-    max-height:72vh;
+    max-height:82vh;
   }
   #treeWrap{ position:relative; }
   svg.links{ position:absolute; top:0; left:0; pointer-events:none; }
@@ -262,6 +283,20 @@
     </div>
     <button class="btn" id="expandAllBtn">Expandir todo</button>
     <button class="btn" id="collapseAllBtn">Colapsar todo</button>
+    <button class="btn btn-primary" id="exportBtn">⭳ Exportar a Excel</button>
+  </div>
+
+  <div class="toolbar">
+    <div class="chip-group" id="porteoChipGroup">
+      <span class="filter-label">Portea Nxt</span>
+      <button class="chip chip-good active" data-val="si" type="button">Listo</button>
+      <button class="chip chip-critical active" data-val="no" type="button">No listo</button>
+      <button class="chip chip-warn active" data-val="otro" type="button">Sin definir</button>
+    </div>
+    <div class="chip-group" id="tipoChipGroup">
+      <span class="filter-label">Tipo de medidor</span>
+    </div>
+    <span class="filter-summary" id="filterSummary"></span>
   </div>
 
   <div class="toolbar" style="justify-content:space-between;">
@@ -353,6 +388,53 @@ tipoList.innerHTML = tipos.map(([name, count]) => `
   </div>
 `).join('');
 
+// ---- filtros ----
+const TIPO_OPTIONS = tipos.map(t => t[0]);
+const porteoFilter = new Set(['si','no','otro']);
+const tipoFilter = new Set(TIPO_OPTIONS);
+
+document.querySelectorAll('#porteoChipGroup .chip').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const val = btn.dataset.val;
+    if(porteoFilter.has(val)){ porteoFilter.delete(val); btn.classList.remove('active'); }
+    else { porteoFilter.add(val); btn.classList.add('active'); }
+    render();
+  });
+});
+
+const tipoChipGroup = document.getElementById('tipoChipGroup');
+TIPO_OPTIONS.forEach(name => {
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'chip chip-tipo active';
+  btn.textContent = name;
+  btn.dataset.val = name;
+  btn.addEventListener('click', () => {
+    if(tipoFilter.has(name)){ tipoFilter.delete(name); btn.classList.remove('active'); }
+    else { tipoFilter.add(name); btn.classList.add('active'); }
+    render();
+  });
+  tipoChipGroup.appendChild(btn);
+});
+
+function computeFiltered(nodes){
+  let s=0, no=0, o=0;
+  for(const node of nodes){
+    if(node.ch && node.ch.length){
+      const r = computeFiltered(node.ch);
+      node._fs = r.s; node._fno = r.no; node._fo = r.o; node._fc = r.s+r.no+r.o;
+    } else {
+      const included = tipoFilter.has(node.n);
+      node._fs = (included && porteoFilter.has('si')) ? node.s : 0;
+      node._fno = (included && porteoFilter.has('no')) ? node.no : 0;
+      node._fo = (included && porteoFilter.has('otro')) ? node.o : 0;
+      node._fc = node._fs + node._fno + node._fo;
+    }
+    s += node._fs; no += node._fno; o += node._fo;
+  }
+  return {s, no, o};
+}
+
 // ---- search state ----
 let searchQuery = '';
 
@@ -373,13 +455,14 @@ let rowCounter, maxDepth;
 function layout(nodes, depth, forceFull){
   maxDepth = Math.max(maxDepth, depth);
   for(const node of nodes){
+    if(node._fc === 0){ continue; }
     if(searchQuery && !node._include){ continue; }
     node.x = depth*COLW;
     const full = forceFull || node._selfMatch;
     const expand = searchQuery ? (full || node._include) : !collapsed.has(node.id);
     if(node.ch && node.ch.length && expand){
       layout(node.ch, depth+1, full);
-      const vis = node.ch.filter(c => !searchQuery || c._include);
+      const vis = node.ch.filter(c => c._fc>0 && (!searchQuery || c._include));
       if(vis.length){
         node.y = (vis[0].y + vis[vis.length-1].y)/2;
       } else {
@@ -393,6 +476,7 @@ function layout(nodes, depth, forceFull){
 
 function collectVisible(nodes, parent, depth, out, links, forceFull){
   for(const node of nodes){
+    if(node._fc === 0){ continue; }
     if(searchQuery && !node._include){ continue; }
     out.push(node);
     if(parent) links.push([parent, node]);
@@ -405,11 +489,11 @@ function collectVisible(nodes, parent, depth, out, links, forceFull){
 }
 
 function statusSegments(node){
-  const total = node.c || 1;
+  const total = node._fc || 1;
   return [
-    {cls:'good', v:node.s},
-    {cls:'critical', v:node.no},
-    {cls:'warn', v:node.o}
+    {cls:'good', v:node._fs},
+    {cls:'critical', v:node._fno},
+    {cls:'warn', v:node._fo}
   ].filter(s=>s.v>0).map(s=>({...s, pct: s.v/total*100}));
 }
 
@@ -422,6 +506,13 @@ function highlightLabel(name){
 }
 
 function render(){
+  const totals = computeFiltered(DATA.tree);
+  const filteredTotal = totals.s + totals.no + totals.o;
+  const summaryEl = document.getElementById('filterSummary');
+  summaryEl.textContent = (filteredTotal === DATA.total)
+    ? ''
+    : `Mostrando ${filteredTotal.toLocaleString('es-MX')} de ${DATA.total.toLocaleString('es-MX')} registros`;
+
   markMatches(DATA.tree);
   rowCounter = 0; maxDepth = 0;
   layout(DATA.tree, 0, false);
@@ -464,7 +555,7 @@ function render(){
     div.style.width = NODEW + 'px';
     div.style.height = NODEH + 'px';
     div.setAttribute('data-id', node.id);
-    div.title = LEVEL_NAMES[node.depth] + ': ' + node.n + ' — ' + node.c.toLocaleString('es-MX') + ' registros';
+    div.title = LEVEL_NAMES[node.depth] + ': ' + node.n + ' — ' + node._fc.toLocaleString('es-MX') + ' registros';
     if(hasChildren){
       div.tabIndex = 0;
       div.setAttribute('role','button');
@@ -482,7 +573,7 @@ function render(){
       ${chev}
       <span class="label">${highlightLabel(node.n)}</span>
       <span class="statusbar">${bar}</span>
-      <span class="count">${node.c.toLocaleString('es-MX')}</span>
+      <span class="count">${node._fc.toLocaleString('es-MX')}</span>
     `;
 
     if(hasChildren){
@@ -505,7 +596,9 @@ function render(){
   if(out.length === 0){
     const empty = document.createElement('div');
     empty.className = 'empty-state';
-    empty.textContent = 'Sin coincidencias para “' + searchQueryRaw + '”.';
+    empty.textContent = searchQuery
+      ? 'Sin coincidencias para “' + searchQueryRaw + '”.'
+      : 'Sin registros para los filtros seleccionados.';
     wrap.appendChild(empty);
   }
 }
@@ -525,6 +618,136 @@ document.getElementById('collapseAllBtn').addEventListener('click', ()=>{
   collapsed.clear();
   collapseAllInit(DATA.tree);
   render();
+});
+
+// ---- Exportar a Excel (.xlsx nativo, sin librerias externas) ----
+function flattenForExport(){
+  computeFiltered(DATA.tree);
+  const rows = [];
+  (function walk(nodes){
+    for(const node of nodes){
+      if(node._fc === 0) continue;
+      if(node.ch && node.ch.length){ walk(node.ch); }
+      else {
+        const fuente = node.parent;
+        const cliente = fuente.parent;
+        const permisionario = cliente.parent;
+        rows.push([permisionario.n, cliente.n, fuente.n, node.n, node._fc, node._fs, node._fno, node._fo]);
+      }
+    }
+  })(DATA.tree);
+  return rows;
+}
+
+function xmlEscape(s){
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;');
+}
+function colLetter(n){
+  let s='', i=n+1;
+  while(i>0){ const rem=(i-1)%26; s = String.fromCharCode(65+rem)+s; i = Math.floor((i-1)/26); }
+  return s;
+}
+function buildSheetXml(headers, rows){
+  const headerCells = headers.map((h,i)=>`<c r="${colLetter(i)}1" t="inlineStr"><is><t>${xmlEscape(h)}</t></is></c>`).join('');
+  let rowsXml = `<row r="1">${headerCells}</row>`;
+  rows.forEach((row, ri) => {
+    const r = ri+2;
+    const cells = row.map((val,ci)=>{
+      const ref = colLetter(ci)+r;
+      if(typeof val === 'number' && isFinite(val)) return `<c r="${ref}"><v>${val}</v></c>`;
+      return `<c r="${ref}" t="inlineStr"><is><t>${xmlEscape(val)}</t></is></c>`;
+    }).join('');
+    rowsXml += `<row r="${r}">${cells}</row>`;
+  });
+  const colCount = headers.length;
+  const colsXml = `<cols>${Array.from({length:colCount},(_,i)=>`<col min="${i+1}" max="${i+1}" width="22" customWidth="1"/>`).join('')}</cols>`;
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">${colsXml}<sheetData>${rowsXml}</sheetData></worksheet>`;
+}
+
+const CRC_TABLE = (function(){
+  const table = [];
+  for(let n=0;n<256;n++){
+    let c = n;
+    for(let k=0;k<8;k++){ c = (c&1) ? (0xEDB88320 ^ (c>>>1)) : (c>>>1); }
+    table[n] = c>>>0;
+  }
+  return table;
+})();
+function crc32(bytes){
+  let crc = 0 ^ (-1);
+  for(let i=0;i<bytes.length;i++){ crc = (crc>>>8) ^ CRC_TABLE[(crc ^ bytes[i]) & 0xFF]; }
+  return (crc ^ (-1)) >>> 0;
+}
+
+function buildZip(files){
+  const encoder = new TextEncoder();
+  function u16(n){ return [n&0xFF,(n>>8)&0xFF]; }
+  function u32(n){ return [n&0xFF,(n>>8)&0xFF,(n>>16)&0xFF,(n>>24)&0xFF]; }
+
+  const localChunks = [], centralChunks = [];
+  let offset = 0;
+  for(const file of files){
+    const nameBytes = encoder.encode(file.name);
+    const dataBytes = encoder.encode(file.content);
+    const crc = crc32(dataBytes);
+    const localOffset = offset;
+    const local = [
+      ...u32(0x04034b50), ...u16(20), ...u16(0), ...u16(0), ...u16(0), ...u16(0),
+      ...u32(crc), ...u32(dataBytes.length), ...u32(dataBytes.length),
+      ...u16(nameBytes.length), ...u16(0),
+      ...nameBytes, ...dataBytes
+    ];
+    localChunks.push(local);
+    offset += local.length;
+
+    const central = [
+      ...u32(0x02014b50), ...u16(20), ...u16(20), ...u16(0), ...u16(0), ...u16(0), ...u16(0),
+      ...u32(crc), ...u32(dataBytes.length), ...u32(dataBytes.length),
+      ...u16(nameBytes.length), ...u16(0), ...u16(0), ...u16(0), ...u16(0), ...u32(0),
+      ...u32(localOffset),
+      ...nameBytes
+    ];
+    centralChunks.push(central);
+  }
+  const centralOffset = offset;
+  let centralSize = 0;
+  for(const c of centralChunks){ centralSize += c.length; offset += c.length; }
+  const end = [
+    ...u32(0x06054b50), ...u16(0), ...u16(0),
+    ...u16(files.length), ...u16(files.length),
+    ...u32(centralSize), ...u32(centralOffset), ...u16(0)
+  ];
+  return new Uint8Array([].concat(...localChunks, ...centralChunks, end));
+}
+
+function downloadXlsx(filename, headers, rows){
+  const CONTENT_TYPES_XML = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/></Types>`;
+  const RELS_XML = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>`;
+  const WORKBOOK_XML = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="Permisionarios y Clientes" sheetId="1" r:id="rId1"/></sheets></workbook>`;
+  const WORKBOOK_RELS_XML = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/></Relationships>`;
+
+  const files = [
+    {name:'[Content_Types].xml', content: CONTENT_TYPES_XML},
+    {name:'_rels/.rels', content: RELS_XML},
+    {name:'xl/workbook.xml', content: WORKBOOK_XML},
+    {name:'xl/_rels/workbook.xml.rels', content: WORKBOOK_RELS_XML},
+    {name:'xl/worksheets/sheet1.xml', content: buildSheetXml(headers, rows)},
+  ];
+  const zipBytes = buildZip(files);
+  const blob = new Blob([zipBytes], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 1000);
+}
+
+document.getElementById('exportBtn').addEventListener('click', ()=>{
+  const rows = flattenForExport();
+  const headers = ['Permisionario','Cliente','Fuente','Tipo de Medidor','Registros','Listo (SI)','No listo (NO)','Sin definir'];
+  downloadXlsx('Registro_Permisionarios_Clientes.xlsx', headers, rows);
 });
 
 render();
