@@ -189,19 +189,34 @@
     font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em;
     color:var(--text-muted); margin-right:2px; flex:none;
   }
-  .chip-group{ display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
-  .chip{
-    font-size:12px; font-weight:600; padding:5px 11px; border-radius:20px;
-    border:1px solid var(--border-strong); background:var(--surface-card); color:var(--text-muted);
+  .dropdown-filter{ position:relative; }
+  .dd-btn{
+    display:flex; align-items:center; gap:8px; font-size:12px; padding:6px 12px; border-radius:8px;
+    border:1px solid var(--border-strong); background:var(--surface-card); color:var(--text-primary);
     cursor:pointer; white-space:nowrap;
   }
-  .chip:hover{ border-color:var(--focus-ring); }
-  .chip:focus-visible{ outline:2px solid var(--focus-ring); outline-offset:1px; }
-  .chip.active.chip-good{ background:color-mix(in srgb, var(--st-good) 16%, var(--surface-card)); border-color:var(--st-good); color:var(--st-good); }
-  .chip.active.chip-critical{ background:color-mix(in srgb, var(--st-critical) 16%, var(--surface-card)); border-color:var(--st-critical); color:var(--st-critical); }
-  .chip.active.chip-warn{ background:color-mix(in srgb, var(--st-warn) 18%, var(--surface-card)); border-color:var(--st-warn); color:var(--st-warn); }
-  .chip.active.chip-tipo{ background:color-mix(in srgb, var(--lvl-tipo) 16%, var(--surface-card)); border-color:var(--lvl-tipo); color:var(--lvl-tipo); }
-  .chip.active.chip-division{ background:color-mix(in srgb, var(--lvl-division) 18%, var(--surface-card)); border-color:var(--lvl-division); color:var(--lvl-division); }
+  .dd-btn:hover{ border-color:var(--focus-ring); }
+  .dd-btn:focus-visible{ outline:2px solid var(--focus-ring); outline-offset:1px; }
+  .dd-btn .dd-label{ font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--text-muted); }
+  .dd-btn .dd-value{ font-weight:600; }
+  .dd-btn .dd-caret{ font-size:10px; color:var(--text-muted); transition:transform .15s ease; }
+  .dropdown-filter.open .dd-btn{ border-color:var(--focus-ring); }
+  .dropdown-filter.open .dd-btn .dd-caret{ transform:rotate(180deg); }
+  .dd-panel{
+    display:none; position:absolute; top:calc(100% + 6px); left:0; z-index:20;
+    min-width:230px; max-height:280px; overflow-y:auto;
+    background:var(--surface-card); border:1px solid var(--border); border-radius:10px;
+    box-shadow:0 10px 28px rgba(0,0,0,0.18); padding:8px;
+  }
+  .dropdown-filter.open .dd-panel{ display:block; }
+  .dd-actions{ display:flex; gap:12px; padding:2px 6px 8px; margin-bottom:6px; border-bottom:1px solid var(--border); }
+  .dd-action{ font-size:11.5px; font-weight:600; color:var(--focus-ring); background:none; border:none; cursor:pointer; padding:0; }
+  .dd-action:hover{ text-decoration:underline; }
+  .dd-options{ display:flex; flex-direction:column; gap:1px; }
+  .dd-option{ display:flex; align-items:center; gap:8px; font-size:12.5px; color:var(--text-primary); padding:6px; border-radius:6px; cursor:pointer; }
+  .dd-option:hover{ background:var(--surface-card-hi); }
+  .dd-option input{ cursor:pointer; flex:none; }
+  .dd-dot{ width:8px; height:8px; border-radius:2px; flex:none; }
   .filter-summary{ font-size:12px; color:var(--text-muted); margin-left:auto; white-space:nowrap; }
 
   .tree-frame{
@@ -328,25 +343,40 @@
   </div>
 
   <div class="toolbar">
-    <div class="chip-group" id="porteoChipGroup">
-      <span class="filter-label">Portea Nxt</span>
-      <button class="chip chip-good active" data-val="si" type="button">SI</button>
-      <button class="chip chip-critical active" data-val="no" type="button">NO</button>
-      <button class="chip chip-warn active" data-val="otro" type="button">Por Definir</button>
+    <div class="dropdown-filter" id="porteoDropdown">
+      <button class="dd-btn" type="button">
+        <span class="dd-label">Portea Nxt</span>
+        <span class="dd-value">Todos</span>
+        <span class="dd-caret">▾</span>
+      </button>
+      <div class="dd-panel"></div>
     </div>
-    <div class="chip-group" id="tipoChipGroup">
-      <span class="filter-label">Tipo de medidor</span>
+    <div class="dropdown-filter" id="tipoDropdown">
+      <button class="dd-btn" type="button">
+        <span class="dd-label">Tipo de medidor</span>
+        <span class="dd-value">Todos</span>
+        <span class="dd-caret">▾</span>
+      </button>
+      <div class="dd-panel"></div>
     </div>
-    <div class="chip-group" id="licChipGroup">
-      <span class="filter-label">Licenciamiento</span>
-      <button class="chip chip-good active" data-val="vigente" type="button">Vigencia 2028</button>
-      <button class="chip chip-warn active" data-val="renovacion" type="button">Proceso de Renovación</button>
+    <div class="dropdown-filter" id="licDropdown">
+      <button class="dd-btn" type="button">
+        <span class="dd-label">Licenciamiento</span>
+        <span class="dd-value">Todos</span>
+        <span class="dd-caret">▾</span>
+      </button>
+      <div class="dd-panel"></div>
     </div>
   </div>
 
   <div class="toolbar">
-    <div class="chip-group" id="divisionChipGroup">
-      <span class="filter-label">División</span>
+    <div class="dropdown-filter" id="divisionDropdown">
+      <button class="dd-btn" type="button">
+        <span class="dd-label">División</span>
+        <span class="dd-value">Todos</span>
+        <span class="dd-caret">▾</span>
+      </button>
+      <div class="dd-panel"></div>
     </div>
     <span class="filter-summary" id="filterSummary"></span>
   </div>
@@ -476,42 +506,78 @@ function licCategory(raw){
 const LIC_LABELS = { vigente: 'Vigencia 2028', renovacion: 'Proceso de Renovación' };
 const licFilter = new Set(['vigente','renovacion']);
 
-document.querySelectorAll('#porteoChipGroup .chip').forEach(btn => {
-  btn.addEventListener('click', () => {
-    const val = btn.dataset.val;
-    if(porteoFilter.has(val)){ porteoFilter.delete(val); btn.classList.remove('active'); }
-    else { porteoFilter.add(val); btn.classList.add('active'); }
-    render();
-  });
-});
-
-document.querySelectorAll('#licChipGroup .chip').forEach(btn => {
-  btn.addEventListener('click', () => {
-    const val = btn.dataset.val;
-    if(licFilter.has(val)){ licFilter.delete(val); btn.classList.remove('active'); }
-    else { licFilter.add(val); btn.classList.add('active'); }
-    render();
-  });
-});
-
-function buildChipGroup(containerId, options, filterSet, chipClass){
+function buildDropdownFilter(containerId, items, filterSet){
   const container = document.getElementById(containerId);
-  options.forEach(name => {
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = `chip ${chipClass} active`;
-    btn.textContent = name;
-    btn.dataset.val = name;
-    btn.addEventListener('click', () => {
-      if(filterSet.has(name)){ filterSet.delete(name); btn.classList.remove('active'); }
-      else { filterSet.add(name); btn.classList.add('active'); }
+  const btn = container.querySelector('.dd-btn');
+  const valueEl = container.querySelector('.dd-value');
+  const panel = container.querySelector('.dd-panel');
+  panel.addEventListener('click', e => e.stopPropagation());
+
+  function updateValueLabel(){
+    if(filterSet.size === items.length) valueEl.textContent = 'Todos';
+    else if(filterSet.size === 0) valueEl.textContent = 'Ninguno';
+    else valueEl.textContent = `${filterSet.size} de ${items.length}`;
+  }
+
+  panel.innerHTML = `
+    <div class="dd-actions">
+      <button type="button" class="dd-action" data-act="all">Seleccionar todo</button>
+      <button type="button" class="dd-action" data-act="none">Ninguno</button>
+    </div>
+    <div class="dd-options">
+      ${items.map(it => `
+        <label class="dd-option">
+          <input type="checkbox" value="${xmlEscape(it.value)}" ${filterSet.has(it.value) ? 'checked' : ''} />
+          ${it.colorVar ? `<span class="dd-dot" style="background:var(${it.colorVar})"></span>` : ''}
+          <span>${xmlEscape(it.label)}</span>
+        </label>`).join('')}
+    </div>
+  `;
+
+  panel.querySelectorAll('.dd-option input').forEach(cb => {
+    cb.addEventListener('change', () => {
+      if(cb.checked) filterSet.add(cb.value); else filterSet.delete(cb.value);
+      updateValueLabel();
       render();
     });
-    container.appendChild(btn);
   });
+  panel.querySelector('[data-act="all"]').addEventListener('click', () => {
+    items.forEach(it => filterSet.add(it.value));
+    panel.querySelectorAll('.dd-option input').forEach(cb => { cb.checked = true; });
+    updateValueLabel();
+    render();
+  });
+  panel.querySelector('[data-act="none"]').addEventListener('click', () => {
+    filterSet.clear();
+    panel.querySelectorAll('.dd-option input').forEach(cb => { cb.checked = false; });
+    updateValueLabel();
+    render();
+  });
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const isOpen = container.classList.contains('open');
+    document.querySelectorAll('.dropdown-filter.open').forEach(el => el.classList.remove('open'));
+    if(!isOpen) container.classList.add('open');
+  });
+
+  updateValueLabel();
 }
-buildChipGroup('tipoChipGroup', TIPO_OPTIONS, tipoFilter, 'chip-tipo');
-buildChipGroup('divisionChipGroup', DIVISION_OPTIONS, divisionFilter, 'chip-division');
+
+document.addEventListener('click', () => {
+  document.querySelectorAll('.dropdown-filter.open').forEach(el => el.classList.remove('open'));
+});
+
+buildDropdownFilter('porteoDropdown', [
+  {value:'si', label:'SI', colorVar:'--st-good'},
+  {value:'no', label:'NO', colorVar:'--st-critical'},
+  {value:'otro', label:'Por Definir', colorVar:'--st-warn'}
+], porteoFilter);
+buildDropdownFilter('licDropdown', [
+  {value:'vigente', label:LIC_LABELS.vigente, colorVar:'--st-good'},
+  {value:'renovacion', label:LIC_LABELS.renovacion, colorVar:'--st-warn'}
+], licFilter);
+buildDropdownFilter('tipoDropdown', TIPO_OPTIONS.map(t => ({value:t, label:t})), tipoFilter);
+buildDropdownFilter('divisionDropdown', DIVISION_OPTIONS.map(d => ({value:d, label:d})), divisionFilter);
 
 function computeFiltered(nodes){
   let s=0, no=0, o=0;
