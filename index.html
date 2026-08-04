@@ -567,17 +567,27 @@ document.addEventListener('click', () => {
   document.querySelectorAll('.dropdown-filter.open').forEach(el => el.classList.remove('open'));
 });
 
-buildDropdownFilter('porteoDropdown', [
+const PORTEO_ITEMS = [
   {value:'si', label:'SI', colorVar:'--st-good'},
   {value:'no', label:'NO', colorVar:'--st-critical'},
   {value:'otro', label:'Por Definir', colorVar:'--st-warn'}
-], porteoFilter);
-buildDropdownFilter('licDropdown', [
+];
+const LIC_ITEMS = [
   {value:'vigente', label:LIC_LABELS.vigente, colorVar:'--st-good'},
   {value:'renovacion', label:LIC_LABELS.renovacion, colorVar:'--st-warn'}
-], licFilter);
-buildDropdownFilter('tipoDropdown', TIPO_OPTIONS.map(t => ({value:t, label:t})), tipoFilter);
-buildDropdownFilter('divisionDropdown', DIVISION_OPTIONS.map(d => ({value:d, label:d})), divisionFilter);
+];
+const TIPO_ITEMS = TIPO_OPTIONS.map(t => ({value:t, label:t}));
+const DIVISION_ITEMS = DIVISION_OPTIONS.map(d => ({value:d, label:d}));
+buildDropdownFilter('porteoDropdown', PORTEO_ITEMS, porteoFilter);
+buildDropdownFilter('licDropdown', LIC_ITEMS, licFilter);
+buildDropdownFilter('tipoDropdown', TIPO_ITEMS, tipoFilter);
+buildDropdownFilter('divisionDropdown', DIVISION_ITEMS, divisionFilter);
+
+function filterSummaryText(filterSet, items){
+  if(filterSet.size === items.length) return 'Todos';
+  if(filterSet.size === 0) return 'Ninguno';
+  return items.filter(it => filterSet.has(it.value)).map(it => it.label).join(', ');
+}
 
 function computeFiltered(nodes){
   let s=0, no=0, o=0;
@@ -805,7 +815,7 @@ function flattenForExport(){
         const fuente = tipo.parent;
         const cliente = fuente.parent;
         const permisionario = cliente.parent;
-        rows.push([permisionario.n, cliente.n, fuente.n, tipo.n, division.n, node.n, node._fc, node._fs, node._fno, node._fo]);
+        rows.push([permisionario.n, cliente.n, fuente.n, tipo.n, division.n, node.n, permisionario.lic || '', node._fc, node._fs, node._fno, node._fo]);
       }
     }
   })(DATA.tree);
@@ -893,18 +903,21 @@ function buildZip(files){
   return new Uint8Array([].concat(...localChunks, ...centralChunks, end));
 }
 
-function downloadXlsx(filename, headers, rows){
-  const CONTENT_TYPES_XML = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/></Types>`;
+function downloadXlsx(filename, sheets){
+  const sheetOverrides = sheets.map((_,i)=>`<Override PartName="/xl/worksheets/sheet${i+1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join('');
+  const CONTENT_TYPES_XML = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>${sheetOverrides}</Types>`;
   const RELS_XML = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>`;
-  const WORKBOOK_XML = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="Permisionarios y Clientes" sheetId="1" r:id="rId1"/></sheets></workbook>`;
-  const WORKBOOK_RELS_XML = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/></Relationships>`;
+  const sheetTags = sheets.map((s,i)=>`<sheet name="${xmlEscape(s.name)}" sheetId="${i+1}" r:id="rId${i+1}"/>`).join('');
+  const WORKBOOK_XML = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>${sheetTags}</sheets></workbook>`;
+  const workbookRelTags = sheets.map((_,i)=>`<Relationship Id="rId${i+1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${i+1}.xml"/>`).join('');
+  const WORKBOOK_RELS_XML = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">${workbookRelTags}</Relationships>`;
 
   const files = [
     {name:'[Content_Types].xml', content: CONTENT_TYPES_XML},
     {name:'_rels/.rels', content: RELS_XML},
     {name:'xl/workbook.xml', content: WORKBOOK_XML},
     {name:'xl/_rels/workbook.xml.rels', content: WORKBOOK_RELS_XML},
-    {name:'xl/worksheets/sheet1.xml', content: buildSheetXml(headers, rows)},
+    ...sheets.map((s,i)=>({name:`xl/worksheets/sheet${i+1}.xml`, content: buildSheetXml(s.headers, s.rows)})),
   ];
   const zipBytes = buildZip(files);
   const blob = new Blob([zipBytes], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
@@ -919,8 +932,22 @@ function downloadXlsx(filename, headers, rows){
 
 document.getElementById('exportBtn').addEventListener('click', ()=>{
   const rows = flattenForExport();
-  const headers = ['Permisionario','Cliente','Fuente','Tipo de Medidor','Division','Ing. CFE','Registros','SI','NO','Por Definir'];
-  downloadXlsx('Registro_Permisionarios_Clientes.xlsx', headers, rows);
+  const headers = ['Permisionario','Cliente','Fuente','Tipo de Medidor','Division','Ing. CFE','Licenciamiento','Registros','SI','NO','Por Definir'];
+
+  const filterRows = [
+    ['Fecha de exportación', new Date().toLocaleString('es-MX')],
+    ['Búsqueda', searchQuery || 'Ninguna'],
+    ['Portea Nxt', filterSummaryText(porteoFilter, PORTEO_ITEMS)],
+    ['Tipo de medidor', filterSummaryText(tipoFilter, TIPO_ITEMS)],
+    ['Licenciamiento', filterSummaryText(licFilter, LIC_ITEMS)],
+    ['División', filterSummaryText(divisionFilter, DIVISION_ITEMS)],
+    ['Filas exportadas', rows.length],
+  ];
+
+  downloadXlsx('Registro_Permisionarios_Clientes.xlsx', [
+    {name:'Permisionarios y Clientes', headers, rows},
+    {name:'Filtros aplicados', headers:['Filtro','Valor'], rows: filterRows},
+  ]);
 });
 
 render();
