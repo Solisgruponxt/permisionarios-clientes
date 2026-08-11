@@ -150,16 +150,6 @@
     padding:12px 14px; background:var(--surface-card); border:1px solid var(--border);
     border-radius:10px; margin-bottom:16px; box-shadow:var(--shadow);
   }
-  .search{ position:relative; flex:1 1 240px; min-width:200px; }
-  .search input{
-    width:100%; padding:8px 12px 8px 32px; border-radius:8px; border:1px solid var(--border-strong);
-    background:var(--page); color:var(--text-primary); font-size:13.5px;
-  }
-  .search input:focus{ outline:2px solid var(--focus-ring); outline-offset:1px; }
-  .search::before{
-    content:"⌕"; position:absolute; left:10px; top:50%; transform:translateY(-50%);
-    color:var(--text-muted); font-size:15px; pointer-events:none;
-  }
   .btn{
     font-size:12.5px; font-weight:600; padding:7px 12px; border-radius:7px;
     border:1px solid var(--border-strong); background:var(--surface-card); color:var(--text-secondary);
@@ -314,9 +304,6 @@
   </div>
 
   <div class="toolbar">
-    <div class="search">
-      <input id="searchInput" type="text" placeholder="Buscar dentro de este nivel…" autocomplete="off" />
-    </div>
     <button class="btn btn-primary" id="exportBtn">⭳ Exportar a Excel</button>
   </div>
 
@@ -404,8 +391,6 @@ function collectByDepth(nodes, targetDepth, cb){
     else if(n.ch){ collectByDepth(n.ch, targetDepth, cb); }
   }
 }
-
-function stripAccents(s){ return s.normalize('NFD').replace(/[̀-ͯ]/g,''); }
 
 let idSeq = 0;
 function buildTree(nodes, parent, depth){
@@ -576,18 +561,6 @@ function computeFiltered(nodes){
   return {s, no, o};
 }
 
-// ---- search state (filters cards within the current level only) ----
-let searchQuery = '';
-let searchQueryRaw = '';
-
-function highlightLabel(name){
-  if(!searchQuery) return name;
-  const norm = stripAccents(name).toLowerCase();
-  const idx = norm.indexOf(searchQuery);
-  if(idx === -1) return name;
-  return name.slice(0,idx) + '<mark>' + name.slice(idx, idx+searchQuery.length) + '</mark>' + name.slice(idx+searchQuery.length);
-}
-
 function statusSegments(fc, fs, fno){
   const total = fc || 1;
   return [
@@ -629,24 +602,15 @@ function render(){
   renderCrumbs();
 
   const depth = path.length;
-  const allNodes = currentNodes().filter(n => n._fc > 0);
-  let nodes = allNodes;
-  if(searchQuery){
-    nodes = nodes.filter(n => stripAccents(n.n).toLowerCase().includes(searchQuery));
-  }
-  nodes = nodes.slice().sort((a,b) => b._fc - a._fc);
+  const nodes = currentNodes().filter(n => n._fc > 0).sort((a,b) => b._fc - a._fc);
 
   document.getElementById('levelTitle').textContent = LEVEL_NAMES[depth] + (depth === 0 ? 's' : '');
-  document.getElementById('levelCount').textContent = (nodes.length === allNodes.length)
-    ? `${allNodes.length.toLocaleString('es-MX')} ${allNodes.length===1 ? 'elemento' : 'elementos'}`
-    : `Mostrando ${nodes.length.toLocaleString('es-MX')} de ${allNodes.length.toLocaleString('es-MX')} elementos`;
+  document.getElementById('levelCount').textContent = `${nodes.length.toLocaleString('es-MX')} ${nodes.length===1 ? 'elemento' : 'elementos'}`;
 
   const grid = document.getElementById('cardGrid');
 
   if(nodes.length === 0){
-    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">${
-      searchQuery ? 'Sin coincidencias para “' + searchQueryRaw + '” en este nivel.' : 'Sin registros para los filtros seleccionados.'
-    }</div>`;
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">Sin registros para los filtros seleccionados.</div>`;
     return;
   }
 
@@ -664,7 +628,7 @@ function render(){
         style="--stripe:var(${LEVEL_COLORS[depth]})"
         title="${LEVEL_NAMES[depth]}: ${node.n} — ${node._fc.toLocaleString('es-MX')} registros">
         <div class="card-top">
-          <span class="card-name">${highlightLabel(node.n)}</span>
+          <span class="card-name">${node.n}</span>
           ${hasChildren ? '<span class="card-chev">›</span>' : ''}
         </div>
         <div class="card-count">${node._fc.toLocaleString('es-MX')}<span class="unit">registros</span></div>
@@ -681,19 +645,11 @@ function render(){
     if(node.ch && node.ch.length){
       btn.addEventListener('click', () => {
         path = [...path, node];
-        searchQueryRaw = ''; searchQuery = '';
-        document.getElementById('searchInput').value = '';
         render();
       });
     }
   });
 }
-
-document.getElementById('searchInput').addEventListener('input', (e)=>{
-  searchQueryRaw = e.target.value.trim();
-  searchQuery = stripAccents(searchQueryRaw).toLowerCase();
-  render();
-});
 
 // ---- Exportar a Excel (.xlsx nativo, sin librerias externas) ----
 function flattenForExport(){
@@ -830,7 +786,6 @@ document.getElementById('exportBtn').addEventListener('click', ()=>{
 
   const filterRows = [
     ['Fecha de exportación', new Date().toLocaleString('es-MX')],
-    ['Búsqueda', searchQuery || 'Ninguna'],
     ['Portea Nxt', filterSummaryText(porteoFilter, PORTEO_ITEMS)],
     ['Tipo de medidor', filterSummaryText(tipoFilter, TIPO_ITEMS)],
     ['Licenciamiento', filterSummaryText(licFilter, LIC_ITEMS)],
