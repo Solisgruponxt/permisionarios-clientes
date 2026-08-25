@@ -449,9 +449,9 @@ function collectByDepth(nodes, targetDepth, cb){
 }
 
 function softwareNames(node){
-  const set = new Set();
-  collectByDepth([node], 2, n => { if(n._fc > 0) set.add(n.n); });
-  return Array.from(set);
+  const totals = {};
+  collectByDepth([node], 2, n => { if(n._fc > 0) totals[n.n] = (totals[n.n]||0) + n._fc; });
+  return Object.entries(totals).sort((a,b) => b[1]-a[1]).map(([name]) => name);
 }
 
 let idSeq = 0;
