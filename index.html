@@ -685,7 +685,9 @@ function render(){
     {label:'Por Definir', count: scopeO, cssVar:'--st-warn'}
   ];
   const porteoMax = Math.max(scopeS, scopeNo, scopeO, 1);
-  document.getElementById('porteoList').innerHTML = porteoRows.map(r => `
+  document.getElementById('porteoList').innerHTML = porteoRows
+    .filter(r => r.label !== 'Por Definir' || r.count > 0)
+    .map(r => `
     <div class="tipo-row">
       <span class="tname" title="${r.label}">${r.label}</span>
       <span class="tbar"><span style="width:${(r.count/porteoMax*100).toFixed(1)}%; background:var(${r.cssVar})"></span></span>
